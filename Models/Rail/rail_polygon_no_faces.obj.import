@@ -1,0 +1,21 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://lvwoe7jco4l4"
+path="res://.godot/imported/rail_polygon_no_faces.obj-f4214ac915dc28281eed7e4e04147e45.mesh"
+
+[deps]
+
+files=["res://.godot/imported/rail_polygon_no_faces.obj-f4214ac915dc28281eed7e4e04147e45.mesh"]
+
+source_file="res://Models/Rail/rail_polygon_no_faces.obj"
+dest_files=["res://.godot/imported/rail_polygon_no_faces.obj-f4214ac915dc28281eed7e4e04147e45.mesh", "res://.godot/imported/rail_polygon_no_faces.obj-f4214ac915dc28281eed7e4e04147e45.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true

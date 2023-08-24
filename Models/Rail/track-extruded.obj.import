@@ -1,0 +1,21 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://b347bkicrobcu"
+path="res://.godot/imported/track-extruded.obj-2b7a1678cf529b2eda3f04d2d930c1bf.mesh"
+
+[deps]
+
+files=["res://.godot/imported/track-extruded.obj-2b7a1678cf529b2eda3f04d2d930c1bf.mesh"]
+
+source_file="res://Models/Rail/track-extruded.obj"
+dest_files=["res://.godot/imported/track-extruded.obj-2b7a1678cf529b2eda3f04d2d930c1bf.mesh", "res://.godot/imported/track-extruded.obj-2b7a1678cf529b2eda3f04d2d930c1bf.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
