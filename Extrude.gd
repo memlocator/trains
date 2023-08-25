@@ -58,7 +58,9 @@ func clear_sleepers():
 func place_sleeper(transform):
 	var mesh = MeshInstance3D.new()
 	mesh.mesh = BoxMesh.new()
+	mesh.set_name("Sleeper")
 	self.add_child(mesh)
+	mesh.set_owner(owner)
 	sleepers.append(mesh)
 	mesh.transform = transform
 	mesh.scale = Vector3(0.7,0.025,0.1)
@@ -164,7 +166,9 @@ func generate_rail(rail_offset):
 
 func _ready():
 	generate_rails()
+	mesh.set_name("RailMesh")
 	add_child(mesh)
+	mesh.set_owner(owner)
 	
 func _process(delta):
 	pass
