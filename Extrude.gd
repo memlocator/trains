@@ -5,22 +5,22 @@ var mesh = MeshInstance3D.new()
 
 
 @export_group("Rail Parameters")
-@export_range(0.05, 1, 0.1) var segment_dist: float = 0.1:
+@export_range(0.05, 1, 0.1) var segment_dist: float = 0.3:
 	set(new_dist):
 		segment_dist = new_dist
 		generate_rails()
 		
-@export_range(0.05, 1, 0.1) var sleeper_dist: float = 0.1:
+@export_range(0.05, 1, 0.1) var sleeper_dist: float = 0.4:
 	set(new_dist):
 		sleeper_dist = new_dist
 		generate_sleepers()
 		
-@export var offset: float = 0:
+@export var offset: float = 0.2:
 	set(new_offset):
 		offset = new_offset
 		generate_rails()	
 	
-@export var track_scale: Vector3 = Vector3(1,1,1):
+@export var track_scale: Vector3 = Vector3(0.05,0.05,0.05):
 	set(new_scale):
 		track_scale = new_scale
 		generate_rails()
@@ -58,7 +58,7 @@ func clear_sleepers():
 func place_sleeper(transform):
 	var mesh = MeshInstance3D.new()
 	mesh.mesh = BoxMesh.new()
-	mesh.set_name("Sleeper")
+	#mesh.set_name("Sleeper")
 	self.add_child(mesh)
 	mesh.set_owner(owner)
 	sleepers.append(mesh)
@@ -76,6 +76,14 @@ func generate_sleepers():
 		
 
 func generate_rails():
+	#for n in get_children():
+		#if n.name != "RailMesh":
+			#remove_child(n)
+			#n.queue_free()
+	#if not mesh:
+	if not mesh:
+		mesh = MeshInstance3D.new()
+	
 	mesh.mesh = ArrayMesh.new()
 	generate_rail(offset)
 	generate_rail(-offset)
