@@ -5,6 +5,11 @@ var target_velocity = Vector3.ZERO
 @onready var RailPath = $"../RailPath" as Path3D
 
 var dragging = false
+var start_drag = Vector3.ZERO
+var dist = 6
+
+var debug_points = []
+
 
 func _get_mouse_world_pos():
 	var cam = get_node("Camera3D")
@@ -31,9 +36,16 @@ func _debug_point(pos):
 	get_tree().get_root().add_child(mesh)
 	mesh.transform.origin = pos
 	mesh.scale = Vector3(0.2, 0.2, 0.2)
+	
+	return mesh
 
 func _input(event):
 	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			dist -= 0.05
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			dist += 0.05
+		
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			var mouse_world_pos = _get_mouse_world_pos()
 			if mouse_world_pos:
@@ -45,34 +57,80 @@ func _input(event):
 					last_curve_transform = RailPath.curve.sample_baked_with_rotation(RailPath.curve.get_baked_length(), true)
 					last_forward = last_curve_transform.basis.z
 					dragging = true
+					start_drag = _get_mouse_world_pos()
 					
 				if !event.pressed: #mouse btn released
 					dragging = false
+					for item in debug_points:
+						item.queue_free()
+					debug_points.clear()
 					
 					var old_forward = RailPath.curve.sample_baked_with_rotation(RailPath.curve.get_baked_length(), true).basis.z
 					var old_pos = RailPath.curve.sample_baked_with_rotation(RailPath.curve.get_baked_length(), true).origin
-					var dot = (mouse_world_pos - old_pos).normalized().dot(old_forward)
+					#var dot = (mouse_world_pos - old_pos).normalized().dot(old_forward)
+					var dot = -1
 					if dot < -0.5:
+						#var out_point = -RailPath.curve.sample_baked_with_rotation(RailPath.curve.get_baked_length()-1, true).basis.z*10#
+						
+						var vec = -(RailPath.curve.sample_baked(RailPath.curve.get_baked_length() - 5, true) - RailPath.curve.sample_baked(RailPath.curve.get_baked_length() - 4, true)).normalized()
 						RailPath.curve.add_point(pos)
-						var prev_prev = RailPath.curve.get_point_position(RailPath.curve.point_count-3)
-						var prev = RailPath.curve.get_point_position(RailPath.curve.point_count-2)
 						var curr = RailPath.curve.get_point_position(RailPath.curve.point_count-1)
+						var prev = RailPath.curve.get_point_position(RailPath.curve.point_count-2)
+						var prev_prev = RailPath.curve.get_point_position(RailPath.curve.point_count-3)
 						
-						var min_dist = Vector3(prev - curr).length()
-						var control_line = Vector3(prev_prev - curr).normalized()
-						var out_point = control_line * -(min_dist/2)#-4
-						var in_point = control_line * (min_dist/2)#4
+						#not that for whatever reason we need to invert this
+						var out_point = vec*4#-RailPath.curve.sample_baked_with_rotation(RailPath.curve.get_baked_length(), true).basis.z*10#*dist#(-(prev_prev - prev)).lerp(in_point, 0.5)#-preview_curve.get_point_in(preview_curve.point_count-1)*dist#-dist*RailPath.curve.sample_baked_with_rotation(RailPath.curve.get_baked_length()-1, true).basis.z#-preview_curve.get_point_in(RailPath.curve.point_count-1)*dist#(prev-prev_prev).normalized()*dist#((curr - prev) - Vector3(curr.x, 0,0)).normalized()
 						
-						#_debug_point(prev + out_point)
-						#_debug_point(prev + in_point)
-						RailPath.curve.set_point_in(RailPath.curve.point_count-2, in_point)
+						#var in_point = ((prev_prev - prev) - (prev - curr)).normalized()*-dist
+						#var out_point = -RailPath.curve.get_point_in(RailPath.curve.point_count-1)*dist#(prev-prev_prev).normalized()*dist
+						
+						var in_point = (prev-curr).lerp(out_point, dist/10)#(curr-prev).normalized()#((prev_prev + prev) + (prev + curr)).normalized()#((prev_prev - prev) - (prev - curr)).normalized()*-4#*-dist
+
+						
+						#var in_point = ((prev_prev + prev) + (prev + curr)).normalized()
+						
+						_debug_point(prev + out_point)
+						_debug_point(prev + in_point)
+						RailPath.curve.set_point_in(RailPath.curve.point_count-1, in_point)
+						RailPath.curve.set_point_in(RailPath.curve.point_count-2, -out_point*0.1)
 						RailPath.curve.set_point_out(RailPath.curve.point_count-2, out_point)
+
 						
 						RailPath.generate_rails()
 						RailPath.generate_sleepers()
 
+var preview_curve = Curve3D.new()
 func preview_placement():
-	pass #TODO
+	for item in debug_points:
+		item.queue_free()
+	debug_points.clear()
+	
+	preview_curve.clear_points()
+	preview_curve.add_point(RailPath.curve.get_point_position(RailPath.curve.point_count-1))
+	var mouse_world = RailPath.to_local(_get_mouse_world_pos())
+	preview_curve.add_point(mouse_world)
+	#preview_curve.set_point_in(preview_curve.point_count-1, RailPath.curve.get_point_in(RailPath.curve.point_count-1))
+	#preview_curve.set_point_out(preview_curve.point_count-1, RailPath.curve.get_point_out(RailPath.curve.point_count-1))
+	
+	
+	var prev_prev = RailPath.curve.get_point_position(RailPath.curve.point_count-2)
+	var prev = RailPath.curve.get_point_position(RailPath.curve.point_count-1)#preview_curve.get_point_position(preview_curve.point_count-2)
+	var curr = preview_curve.get_point_position(preview_curve.point_count-1)
+	
+	var vec = -(RailPath.curve.sample_baked(RailPath.curve.get_baked_length() - 3, true) - RailPath.curve.sample_baked(RailPath.curve.get_baked_length(), true)).normalized()
+	var out_point = vec*4#-RailPath.curve.sample_baked_with_rotation(RailPath.curve.get_baked_length(), true).basis.z*10#*dist#(-(prev_prev - prev)).lerp(in_point, 0.5)#-preview_curve.get_point_in(preview_curve.point_count-1)*dist#-dist*RailPath.curve.sample_baked_with_rotation(RailPath.curve.get_baked_length()-1, true).basis.z#-preview_curve.get_point_in(RailPath.curve.point_count-1)*dist#(prev-prev_prev).normalized()*dist#((curr - prev) - Vector3(curr.x, 0,0)).normalized()
+	var in_point = (prev-curr).lerp(out_point, dist/10)#(curr-prev).normalized()#((prev_prev + prev) + (prev + curr)).normalized()#((prev_prev - prev) - (prev - curr)).normalized()*-4#*-dist
+
+
+	debug_points.append(_debug_point(curr + in_point))
+	debug_points.append(_debug_point(prev + out_point))
+	
+	preview_curve.set_point_out(preview_curve.point_count-2, out_point)
+	preview_curve.set_point_in(preview_curve.point_count-1, in_point)
+	for i in range(50):
+		var transform = preview_curve.sample_baked((float(i)/preview_curve.get_baked_length())*preview_curve.get_baked_length())
+		var m = _debug_point(transform)
+		debug_points.append(m)
 
 func _process(delta):
 	if dragging:
