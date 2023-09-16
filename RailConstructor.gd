@@ -2,7 +2,7 @@
 extends Path3D
 
 var meshes = []
-@export_range(1, 6) var segment_dist: float = 1:
+@export_range(0.1, 6) var segment_dist: float = 1:
 	set(new_dist):
 		segment_dist = new_dist
 		spawn_blocks()
