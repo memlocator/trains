@@ -26,7 +26,7 @@ var mesh = MeshInstance3D.new()
 		generate_rails()
 		
 @export var Regen: bool = false:
-	set(f):
+	set(_f):
 		generate_rails()
 		generate_sleepers()
 	
@@ -43,35 +43,36 @@ func offset_vertices(vertices, vector):
 var cross_section_points = PackedVector3Array([Vector3(-0.7923467755317688, 0.0639202669262886, 0), Vector3(-0.7923470139503479, -0.07024983316659927, 0), Vector3(0.0, -0.0702500119805336, 0), Vector3(0.7923470139503479, -0.07024983316659927, 0), Vector3(0.7923467755317688, 0.0639202669262886, 0), Vector3(0.12165124714374542, 0.1417636126279831, 0), Vector3(0.11951436847448349, 0.8667751550674438, 0), Vector3(0.4583618640899658, 1.0224618911743164, 0), Vector3(0.4583618640899658, 1.2224619388580322, 0), Vector3(0.3319808840751648, 1.2645889520645142, 0), Vector3(0.0, 1.2645902633666992, 0), Vector3(-0.3319808840751648, 1.2645889520645142, 0), Vector3(-0.4583618640899658, 1.2224619388580322, 0), Vector3(-0.4583618640899658, 1.0224618911743164, 0), Vector3(-0.11951436847448349, 0.8667751550674438, 0), Vector3(-0.12165124714374542, 0.1417636126279831, 0)])
 var cross_section_points_len = len(cross_section_points)
 
-func new_segment(transform, offset_vec = Vector3()):
+func new_segment(input_transform, offset_vec = Vector3()):
 	var segment = PackedVector3Array(cross_section_points)
 	var scale_transform = Transform3D().scaled(track_scale)
 	for vertex_idx in cross_section_points_len:
-		segment[vertex_idx] = transform * scale_transform * segment[vertex_idx] + offset_vec
+		segment[vertex_idx] = input_transform * scale_transform * segment[vertex_idx] + offset_vec
 	return segment
 
 func clear_sleepers():
-	for mesh in sleepers:
-		mesh.queue_free()
+	for sleeper in sleepers:
+		sleeper.queue_free()
 	sleepers.clear()
 
-func place_sleeper(transform):
-	var mesh = MeshInstance3D.new()
-	mesh.mesh = BoxMesh.new()
+func place_sleeper(input_transform):
+	var sleeper_mesh = MeshInstance3D.new()
+	sleeper_mesh.mesh = BoxMesh.new()
 	#mesh.set_name("Sleeper")
-	self.add_child(mesh)
-	mesh.set_owner(owner)
-	sleepers.append(mesh)
-	mesh.transform = transform
-	mesh.scale = Vector3(0.7,0.025,0.1)
+	self.add_child(sleeper_mesh)
+	sleeper_mesh.set_owner(owner)
+	sleepers.append(sleeper_mesh)
+	sleeper_mesh.transform = input_transform
+	sleeper_mesh.scale = Vector3(0.7,0.025,0.1)
 
 func generate_sleepers():
 	clear_sleepers()
 
 	var curve_length = curve.get_baked_length()
 	for i in range(0, curve_length*100, sleeper_dist*100):
-		var transform = curve.sample_baked_with_rotation(float(i)/100, true)
-		place_sleeper(transform)
+		if curve.get_baked_length() > 0:
+			var sleeper_transform = curve.sample_baked_with_rotation(float(i)/100, false)
+			place_sleeper(sleeper_transform)
 	
 		
 
@@ -90,31 +91,29 @@ func generate_rails():
 	generate_sleepers()
 
 
-func place_cross_section(cross_sections, transform, rail_offset):
-	var curr_segment = new_segment(transform)
-	curr_segment = offset_vertices(curr_segment, transform.basis.x*rail_offset)
+func place_cross_section(cross_sections, input_transform, rail_offset):
+	var curr_segment = new_segment(input_transform)
+	curr_segment = offset_vertices(curr_segment, input_transform.basis.x*rail_offset)
 	cross_sections.append_array(curr_segment)
 
 func generate_rail(rail_offset):
 	var surface_array = []
 	surface_array.resize(Mesh.ARRAY_MAX)
 	
-	var moved_cross_section = Array(cross_section_points)
 	var cross_sections = PackedVector3Array()
 	var cross_sections_count = 0
 	var indices = PackedInt32Array()
 
 	var curve_length = curve.get_baked_length()
-	var segment_target = curve_length/segment_dist
 	for i in range(0, curve_length*100, segment_dist*100):
-		var transform = curve.sample_baked_with_rotation(float(i)/100, true)
-		place_cross_section(cross_sections, transform, rail_offset)
+		var section_transform = curve.sample_baked_with_rotation(float(i)/100, true)
+		place_cross_section(cross_sections, section_transform, rail_offset)
 		cross_sections_count += 1
 	
 	#need to guarantee we reach the end of the curve
-	var transform = curve.sample_baked_with_rotation(curve_length, true)
-	place_cross_section(cross_sections, transform, rail_offset)
-	cross_sections_count += 1
+	#var transform = curve.sample_baked_with_rotation(curve_length, true)
+	#place_cross_section(cross_sections, transform, rail_offset)
+	#cross_sections_count += 1
 	##################################################
 	
 	var verts = cross_sections#PackedVector3Array()
@@ -177,7 +176,4 @@ func _ready():
 	mesh.set_name("RailMesh")
 	add_child(mesh)
 	mesh.set_owner(owner)
-	
-func _process(delta):
-	pass
 

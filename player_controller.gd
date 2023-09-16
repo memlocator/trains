@@ -55,10 +55,6 @@ func _input(event):
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			var mouse_world_pos = _get_mouse_world_pos()
 			if mouse_world_pos != null:
-				var geo_tool = Geometry2D
-				
-				var pos = RailPath.to_local(mouse_world_pos)
-				
 				if event.pressed:
 					last_curve_transform = RailPath.curve.sample_baked_with_rotation(RailPath.curve.get_baked_length(), false)
 					last_forward = last_curve_transform.basis.z
@@ -91,7 +87,7 @@ func preview_placement():
 		preview_curve.add_point(mouse_world)
 		
 		
-		var prev_prev = RailPath.curve.get_point_position(RailPath.curve.point_count-2)
+		#var prev_prev = RailPath.curve.get_point_position(RailPath.curve.point_count-2)
 		var prev = RailPath.curve.get_point_position(RailPath.curve.point_count-1)#preview_curve.get_point_position(preview_curve.point_count-2)
 		var curr = preview_curve.get_point_position(preview_curve.point_count-1)
 		
@@ -105,7 +101,7 @@ func preview_placement():
 		var right_vec = RailPath.curve.sample_baked_with_rotation(RailPath.curve.get_baked_length()-0.1, false).basis.x
 		var dot_right_prod = right_vec.dot((prev-curr).normalized())
 		
-		var signed_dot = dot_prod*dot_right_prod
+		#var signed_dot = dot_prod*dot_right_prod
 		dist = dot_prod*dot_right_prod*-preview_curve.get_baked_length()
 		
 		var out_point = vec*abs(dist) + vec*(1-dot_prod)#-RailPath.curve.sample_baked_with_rotation(RailPath.curve.get_baked_length(), true).basis.z*10#*dist#(-(prev_prev - prev)).lerp(in_point, 0.5)#-preview_curve.get_point_in(preview_curve.point_count-1)*dist#-dist*RailPath.curve.sample_baked_with_rotation(RailPath.curve.get_baked_length()-1, true).basis.z#-preview_curve.get_point_in(RailPath.curve.point_count-1)*dist#(prev-prev_prev).normalized()*dist#((curr - prev) - Vector3(curr.x, 0,0)).normalized()
@@ -123,11 +119,11 @@ func preview_placement():
 		debug_points.append(_debug_point(prev + out_point))
 		
 		for i in range(50):
-			var transform = preview_curve.sample_baked((float(i)/preview_curve.get_baked_length())*preview_curve.get_baked_length())
-			var m = _debug_point(transform)
+			var point_transform = preview_curve.sample_baked((float(i)/preview_curve.get_baked_length())*preview_curve.get_baked_length())
+			var m = _debug_point(point_transform)
 			debug_points.append(m)
 
-func _process(delta):
+func _process(_delta):
 	if dragging:
 		preview_placement()
 		#print("dragging ", dragging)
