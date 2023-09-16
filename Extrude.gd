@@ -4,31 +4,31 @@ var sleepers = []
 var mesh = MeshInstance3D.new()
 
 
-@export_group("Rail Parameters")
-@export_range(0.05, 1, 0.1) var segment_dist: float = 0.3:
-	set(new_dist):
-		segment_dist = new_dist
-		generate_rails()
+#@export_group("Rail Parameters")
+var segment_dist: float = 0.3
+	#set(new_dist):
+		#segment_dist = new_dist
+		#generate_rails()
 		
-@export_range(0.05, 1, 0.1) var sleeper_dist: float = 0.4:
-	set(new_dist):
-		sleeper_dist = new_dist
-		generate_sleepers()
+var sleeper_dist = 0.4
+	#set(new_dist):
+		#sleeper_dist = new_dist
+		#generate_sleepers()
 		
-@export var offset: float = 0.2:
-	set(new_offset):
-		offset = new_offset
-		generate_rails()	
+var offset = 0.2
+	#set(new_offset):
+		#offset = new_offset
+		#generate_rails()	
 	
-@export var track_scale: Vector3 = Vector3(0.05,0.05,0.05):
-	set(new_scale):
-		track_scale = new_scale
-		generate_rails()
+var track_scale = Vector3(0.05,0.05,0.05)
+	#set(new_scale):
+		#track_scale = new_scale
+		#generate_rails(target_curve)
 		
-@export var Regen: bool = false:
-	set(_f):
-		generate_rails()
-		generate_sleepers()
+var Regen: bool = false
+	#set(_f):
+		#generate_rails(target_curve)
+		#generate_sleepers(target_curve)
 	
 #func _on_rail_curve_changed():
 	#generate_rails()
@@ -65,18 +65,21 @@ func place_sleeper(input_transform):
 	sleeper_mesh.transform = input_transform
 	sleeper_mesh.scale = Vector3(0.7,0.025,0.1)
 
-func generate_sleepers():
-	clear_sleepers()
+func generate_sleepers(target_curve):
+	#clear_sleepers()
 
-	var curve_length = curve.get_baked_length()
+	var curve_length = target_curve.get_baked_length()
 	for i in range(0, curve_length*100, sleeper_dist*100):
 		if curve.get_baked_length() > 0:
-			var sleeper_transform = curve.sample_baked_with_rotation(float(i)/100, false)
+			var sleeper_transform = target_curve.sample_baked_with_rotation(float(i)/100, false)
 			place_sleeper(sleeper_transform)
 	
 		
 
-func generate_rails():
+func generate_rails(target_curve):
+	mesh = MeshInstance3D.new()
+	mesh.set_name("RailMesh")
+	add_child(mesh)
 	#for n in get_children():
 		#if n.name != "RailMesh":
 			#remove_child(n)
@@ -86,9 +89,9 @@ func generate_rails():
 		mesh = MeshInstance3D.new()
 	
 	mesh.mesh = ArrayMesh.new()
-	generate_rail(offset)
-	generate_rail(-offset)
-	generate_sleepers()
+	generate_rail(offset, target_curve)
+	generate_rail(-offset, target_curve)
+	generate_sleepers(target_curve)
 
 
 func place_cross_section(cross_sections, input_transform, rail_offset):
@@ -96,7 +99,7 @@ func place_cross_section(cross_sections, input_transform, rail_offset):
 	curr_segment = offset_vertices(curr_segment, input_transform.basis.x*rail_offset)
 	cross_sections.append_array(curr_segment)
 
-func generate_rail(rail_offset):
+func generate_rail(rail_offset, target_curve):
 	var surface_array = []
 	surface_array.resize(Mesh.ARRAY_MAX)
 	
@@ -104,19 +107,19 @@ func generate_rail(rail_offset):
 	var cross_sections_count = 0
 	var indices = PackedInt32Array()
 
-	var curve_length = curve.get_baked_length()
+	var curve_length = target_curve.get_baked_length()
 	for i in range(0, curve_length*100, segment_dist*100):
-		var section_transform = curve.sample_baked_with_rotation(float(i)/100, true)
+		var section_transform = target_curve.sample_baked_with_rotation(float(i)/100, false)
 		place_cross_section(cross_sections, section_transform, rail_offset)
 		cross_sections_count += 1
-	
+		
 	#need to guarantee we reach the end of the curve
-	#var transform = curve.sample_baked_with_rotation(curve_length, true)
-	#place_cross_section(cross_sections, transform, rail_offset)
-	#cross_sections_count += 1
+	var transform = target_curve.sample_baked_with_rotation(curve_length, false)
+	place_cross_section(cross_sections, transform, rail_offset)
+	cross_sections_count += 1
 	##################################################
 	
-	var verts = cross_sections#PackedVector3Array()
+	var verts = cross_sections
 	var normals = PackedVector3Array()
 	normals.resize(len(verts))
 	normals.fill(Vector3(0,0,0))
@@ -142,14 +145,6 @@ func generate_rail(rail_offset):
 				normals[vertC] += normal
 				normals[vertD] += normal
 				
-				#indices.append(vertC)
-				#indices.append(vertB)
-				#indices.append(vertA)
-#
-				#indices.append(vertB)
-				#indices.append(vertC)
-				#indices.append(vertD)
-				
 				indices.append(vertA)
 				indices.append(vertB)
 				indices.append(vertC)
@@ -172,7 +167,8 @@ func generate_rail(rail_offset):
 	mesh.mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
 
 func _ready():
-	generate_rails()
+	pass
+	#generate_rails()
 	mesh.set_name("RailMesh")
 	add_child(mesh)
 	mesh.set_owner(owner)
