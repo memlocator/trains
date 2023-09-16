@@ -1,4 +1,4 @@
-@tool
+#@tool
 extends Path3D
 var sleepers = []
 var mesh = MeshInstance3D.new()
@@ -78,7 +78,7 @@ func generate_sleepers(target_curve):
 
 func generate_rails(target_curve):
 	mesh = MeshInstance3D.new()
-	mesh.set_name("RailMesh")
+	#mesh.set_name("RailMesh")
 	add_child(mesh)
 	#for n in get_children():
 		#if n.name != "RailMesh":
@@ -114,8 +114,8 @@ func generate_rail(rail_offset, target_curve):
 		cross_sections_count += 1
 		
 	#need to guarantee we reach the end of the curve
-	var transform = target_curve.sample_baked_with_rotation(curve_length, false)
-	place_cross_section(cross_sections, transform, rail_offset)
+	var section_transform = target_curve.sample_baked_with_rotation(curve_length, false)
+	place_cross_section(cross_sections, section_transform, rail_offset)
 	cross_sections_count += 1
 	##################################################
 	
@@ -169,7 +169,7 @@ func generate_rail(rail_offset, target_curve):
 func _ready():
 	pass
 	#generate_rails()
-	mesh.set_name("RailMesh")
-	add_child(mesh)
-	mesh.set_owner(owner)
+	#mesh.set_name("RailMesh")
+	#add_child(mesh)
+	#mesh.set_owner(owner)
 
