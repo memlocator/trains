@@ -9,6 +9,8 @@ var CurveUtil = preload("res://CurveUtil.gd")
 var dragging = false
 var start_drag = Vector3.ZERO
 var dist = 16
+var curve_tightness = 1
+var tightness_increment = 0.4
 
 var debug_points = []
 
@@ -43,11 +45,11 @@ func _debug_point(pos):
 func _input(event):
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			dist -= 0.1
+			curve_tightness -= tightness_increment
 			#print(dist)
 			
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			dist += 0.1
+			curve_tightness += tightness_increment
 			#print(dist)
 		
 		if event.button_index == MOUSE_BUTTON_LEFT:
@@ -108,7 +110,7 @@ func preview_placement():
 		
 		var out_point = vec*abs(dist) + vec*(1-dot_prod)#-RailPath.curve.sample_baked_with_rotation(RailPath.curve.get_baked_length(), true).basis.z*10#*dist#(-(prev_prev - prev)).lerp(in_point, 0.5)#-preview_curve.get_point_in(preview_curve.point_count-1)*dist#-dist*RailPath.curve.sample_baked_with_rotation(RailPath.curve.get_baked_length()-1, true).basis.z#-preview_curve.get_point_in(RailPath.curve.point_count-1)*dist#(prev-prev_prev).normalized()*dist#((curr - prev) - Vector3(curr.x, 0,0)).normalized()
 		
-		var in_point = right_vec*dist + vec*(dot_prod)#.lerp(-out_point*(dist/10), 0.5)#(prev-curr).lerp(out_point, dist/10)
+		var in_point = right_vec*dist - vec*curve_tightness*-dot_prod#.lerp(-out_point*(dist/10), 0.5)#(prev-curr).lerp(out_point, dist/10)
 		##control point calcs complete
 		
 		debug_points.append(_debug_point(RailPath.curve.sample_baked(RailPath.curve.get_baked_length(), false)))
