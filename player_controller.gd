@@ -150,7 +150,7 @@ func preview_placement():
 		preview_curve.set_point_out(preview_curve.point_count-2, out_point)
 		preview_curve.set_point_in(preview_curve.point_count-1, in_point)
 		
-		valid_placement = validate_curve(preview_curve, 0.9)
+		valid_placement = (validate_curve(preview_curve, 0.9) and dot_prod < 0)
 		if valid_placement:
 			debug_points.append(_debug_point(curr + in_point))
 			debug_points.append(_debug_point(prev + out_point))
