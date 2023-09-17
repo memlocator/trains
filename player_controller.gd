@@ -137,7 +137,7 @@ func preview_placement():
 		var signed_dot = dot_prod*dot_right_prod
 		dist = dot_prod*dot_right_prod*-preview_curve.get_baked_length()
 		
-		var out_point = vec*abs(dist) + vec*(1-dot_prod)
+		var out_point = vec*abs(dist) + vec*(1-dot_prod)*-curve_tightness*dot_prod
 		var in_point = right_vec*dist - vec*curve_tightness*-dot_prod#.lerp(-out_point*(dist/10), 0.5)#(prev-curr).lerp(out_point, dist/10)
 		##control point calcs complete
 		
@@ -150,7 +150,7 @@ func preview_placement():
 		preview_curve.set_point_out(preview_curve.point_count-2, out_point)
 		preview_curve.set_point_in(preview_curve.point_count-1, in_point)
 		
-		valid_placement = (validate_curve(preview_curve, 0.9) and dot_prod < 0)
+		valid_placement = (validate_curve(preview_curve, 0.85) and dot_prod < 0)
 		if valid_placement:
 			debug_points.append(_debug_point(curr + in_point))
 			debug_points.append(_debug_point(prev + out_point))
