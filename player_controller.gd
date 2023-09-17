@@ -82,7 +82,7 @@ func _input(event):
 func validate_curve(target_curve: Curve3D, lim: float) -> bool:
 	var valid = true
 	var points = []
-	for i in range(50):
+	for i in range(3):
 		var point_pos = target_curve.sample_baked((float(i)/target_curve.get_baked_length())*target_curve.get_baked_length())
 		points.append(point_pos)
 
@@ -97,7 +97,7 @@ func validate_curve(target_curve: Curve3D, lim: float) -> bool:
 		var prev_to_point = (point - prev_point).normalized()
 		var point_to_next = (next_point - point).normalized()
 		var dot_prod = point_to_next.dot(prev_to_point)
-		if dot_prod < lim and dot_prod != 0:
+		if dot_prod < lim:
 			valid = false
 			break
 		
@@ -137,7 +137,7 @@ func preview_placement():
 		var signed_dot = dot_prod*dot_right_prod
 		dist = dot_prod*dot_right_prod*-preview_curve.get_baked_length()
 		
-		var out_point = vec*abs(dist) + vec*(1-dot_prod)*-curve_tightness*dot_prod
+		var out_point = vec*abs(dist) + vec*(1-dot_prod)*-(curve_tightness/4)*dot_prod
 		var in_point = right_vec*dist - vec*curve_tightness*-dot_prod#.lerp(-out_point*(dist/10), 0.5)#(prev-curr).lerp(out_point, dist/10)
 		##control point calcs complete
 		
