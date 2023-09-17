@@ -7,6 +7,7 @@ var target_velocity = Vector3.ZERO
 var CurveUtil = preload("res://CurveUtil.gd")
 
 var dragging = false
+var valid_placement = false
 var start_drag = Vector3.ZERO
 var dist = 16
 var curve_tightness = 1
@@ -47,9 +48,13 @@ func _input(event):
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			curve_tightness -= tightness_increment
+			curve_tightness = max(curve_tightness, 0)
+			curve_tightness = min(curve_tightness, 16)
 			
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			curve_tightness += tightness_increment
+			curve_tightness = max(curve_tightness, 0)
+			curve_tightness = min(curve_tightness, 16)
 		
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			var mouse_world_pos = _get_mouse_world_pos()
@@ -61,7 +66,7 @@ func _input(event):
 					start_drag = _get_mouse_world_pos()
 					curve_tightness = 1
 					
-				if !event.pressed: #mouse btn released
+				if !event.pressed and valid_placement: #mouse btn released
 					dragging = false
 					for item in debug_points:
 						item.queue_free()
@@ -74,9 +79,36 @@ func _input(event):
 
 						
 
+func validate_curve(target_curve: Curve3D, lim: float) -> bool:
+	var valid = true
+	var points = []
+	for i in range(50):
+		var point_pos = target_curve.sample_baked((float(i)/target_curve.get_baked_length())*target_curve.get_baked_length())
+		points.append(point_pos)
+
+	
+	for point_idx in points.size():
+		if point_idx == 0 or point_idx == points.size()-1:
+			continue
+		var prev_point = points[point_idx-1]
+		var point = points[point_idx]
+		var next_point = points[point_idx+1]
+		
+		var prev_to_point = (point - prev_point).normalized()
+		var point_to_next = (next_point - point).normalized()
+		var dot_prod = point_to_next.dot(prev_to_point)
+		if dot_prod < lim and dot_prod != 0:
+			valid = false
+			break
+		
+	
+	return valid
+	
+
 var preview_curve = Curve3D.new()
 func preview_placement():
 	preview_curve = Curve3D.new()
+	valid_placement = true
 	for item in debug_points:
 		item.queue_free()
 	debug_points.clear()
@@ -102,7 +134,7 @@ func preview_placement():
 		var right_vec = rail_curves[-1].sample_baked_with_rotation(rail_curves[-1].get_baked_length()-0.1, false).basis.x
 		var dot_right_prod = right_vec.dot((prev-curr).normalized())
 		
-		#var signed_dot = dot_prod*dot_right_prod
+		var signed_dot = dot_prod*dot_right_prod
 		dist = dot_prod*dot_right_prod*-preview_curve.get_baked_length()
 		
 		var out_point = vec*abs(dist) + vec*(1-dot_prod)
@@ -111,21 +143,24 @@ func preview_placement():
 		
 		debug_points.append(_debug_point(rail_curves[-1].sample_baked(rail_curves[-1].get_baked_length() - 0.2, false)))
 		debug_points.append(_debug_point(rail_curves[-1].sample_baked(rail_curves[-1].get_baked_length() - 0.1, false)))
-
-
+		
 		out_point = Vector3(out_point.x, 0, out_point.z)
 		in_point = Vector3(in_point.x, 0, in_point.z)
-		
+		#if dot_prod < 0 and dot_prod < -0.3:
 		preview_curve.set_point_out(preview_curve.point_count-2, out_point)
 		preview_curve.set_point_in(preview_curve.point_count-1, in_point)
 		
-		debug_points.append(_debug_point(curr + in_point))
-		debug_points.append(_debug_point(prev + out_point))
-		
-		for i in range(50):
-			var point_transform = preview_curve.sample_baked((float(i)/preview_curve.get_baked_length())*preview_curve.get_baked_length())
-			var m = _debug_point(point_transform)
-			debug_points.append(m)
+		valid_placement = validate_curve(preview_curve, 0.9)
+		if valid_placement:
+			debug_points.append(_debug_point(curr + in_point))
+			debug_points.append(_debug_point(prev + out_point))
+			
+			for i in range(50):
+				var point_transform = preview_curve.sample_baked((float(i)/preview_curve.get_baked_length())*preview_curve.get_baked_length())
+				var m = _debug_point(point_transform)
+				debug_points.append(m)
+		#else:
+			#valid_placement = false
 
 func _process(_delta):
 	if dragging:
